@@ -1,0 +1,271 @@
+// Declare some variables that will be used later on (globals)
+var canvas = document.getElementById("canvas");
+var context = canvas.getContext("2d");
+// Directionals
+var goLeft = false;
+var goRight = false;
+var stopGame = true;
+var score = 0;
+var health = 4;
+var count = 0;
+var count2 = 0;
+var level = 1;
+// Start Moving
+document.addEventListener("keydown", keysDown, false);
+document.addEventListener("keyup", keysUp, false);
+/* The keypress function
+ * Use http://www.javascriptkeycode.com/
+ * 39 - Right Arrow Key
+ * 37 - Left Arrow Key
+ * 32 - Spacebar
+ */
+
+function keysDown(e) {
+    if(e.keyCode == 39) {
+        goRight = true;
+    } else if(e.keyCode == 37) {
+        goLeft = true;
+    } else if(e.keyCode == 32 && stopGame) {
+        playAgain();
+    }
+}
+// Stop moving
+
+function keysUp(e) {
+    if(e.keyCode == 39) {
+        goRight = false;
+    } else if(e.keyCode == 37) {
+        goLeft = false;
+    }
+}
+// Defining The Player
+var thePlayer = {
+    size: 20,
+    x: (canvas.width - 30) / 2,
+    y: canvas.height - 30,
+    color: "white"
+};
+// Make the white balls
+var goodies = {
+    x: [],
+    y: [],
+    speed: 2,
+    color: ["white"],
+    state: []
+};
+var whites = 0;
+// Make the black balls
+var baddies = {
+    x: [],
+    y: [],
+    speed: 2,
+    color: ["black"]
+};
+var blacks = 0;
+var radius = 10;
+// Start randomizing the balls location via Math.random()
+
+function drawGoodies() {
+    if(Math.random() < .02) {
+        goodies.x.push(Math.random() * canvas.width);
+        goodies.y.push(0);
+        goodies.state.push(true);
+    }
+    whites = goodies.x.length;
+}
+// Gives the black circles some location along the 'x' axis
+
+function drawBaddies() {
+    if(score < 30) {
+        if(Math.random() < .05) {
+            baddies.x.push(Math.random() * canvas.width);
+            baddies.y.push(0);
+        }
+    } else if(score < 50) {
+        if(Math.random() < .1) {
+            baddies.x.push(Math.random() * canvas.width);
+            baddies.y.push(0);
+        }
+    } else {
+        if(Math.random() < .2) {
+            baddies.x.push(Math.random() * canvas.width);
+            baddies.y.push(0);
+        }
+    }
+    blacks = baddies.x.length;
+}
+// Finally, making the white balls
+
+function collectThese() {
+    for(var i = 0; i < whites; i++) {
+        if(goodies.state[i] == true) {
+            var countCol = (i + count);
+            context.beginPath();
+            context.arc(goodies.x[i], goodies.y[i], radius, 0, Math.PI * 2);
+            context.fillStyle = goodies.color[countCol % 3];
+            context.fill();
+            context.closePath();
+        }
+    }
+}
+// Making the black balls to avoid (copy-paste white ball code)
+
+function avoidThese() {
+    for(var i = 0; i < blacks; i++) {
+        var badCol = (i + count2);
+        context.beginPath();
+        context.arc(baddies.x[i], baddies.y[i], radius, 0, Math.PI * 2);
+        context.fillStyle = baddies.color[badCol % 5];
+        context.fill();
+        context.closePath();
+    }
+}
+// Let's actually draw the playable character
+
+function makeYou() {
+    context.beginPath();
+    context.rect(thePlayer.x, thePlayer.y, thePlayer.size, thePlayer.size);
+    context.fillStyle = thePlayer.color;
+    context.fill();
+    context.closePath();
+}
+// Make the character move
+
+function updateScreen() {
+    if(goLeft && thePlayer.x > 0) {
+        thePlayer.x -= 4;
+    }
+    if(goRight && thePlayer.x + thePlayer.size < canvas.width) {
+        thePlayer.x += 4;
+    }
+    for(var i = 0; i < whites; i++) {
+        goodies.y[i] += goodies.speed;
+    }
+    for(var i = 0; i < blacks; i++) {
+        baddies.y[i] += baddies.speed;
+    }
+    // Running into the objects (save for last...)
+    for(var i = 0; i < whites; i++) {
+        if(goodies.state[i]) {
+            if(thePlayer.x < goodies.x[i] + radius && thePlayer.x + 30 + radius > goodies.x[i] && thePlayer.y < goodies.y[i] + radius && thePlayer.y + 30 > goodies.y[i]) {
+                score++
+            }
+        }
+        // Remove circles that reach the bottom
+        if(goodies.y[i] + radius > canvas.height) {
+            goodies.x.shift();
+            goodies.y.shift();
+            goodies.state.shift();
+            count++;
+        }
+    }
+    for(var i = 0; i < blacks; i++) {
+        if(thePlayer.x < baddies.x[i] + radius && thePlayer.x + 30 + radius > baddies.x[i] && thePlayer.y < baddies.y[i] + radius && thePlayer.y + 30 > baddies.y[i]) {
+            health--;
+            baddies.y[i] = 0;
+            if(health <= 0) {
+                gamesOver();
+            }
+        }
+        // Removes circles from x and y arrays that are no longer in play
+        if(baddies.y[i] + radius > canvas.height) {
+            baddies.x.shift();
+            baddies.y.shift();
+            count2++;
+        }
+    }
+    // Attempting to make levels vis switch-case.
+    // Note to self: Try to use switch case instead of 'if' for practice
+    switch(score) {
+        case 20:
+            // Start off slow
+            baddies.speed = 2;
+            goodies.speed = 2;
+            level = 2;
+            break;
+        case 30:
+            // Get a little faster
+            baddies.speed = 4;
+            goodies.speed = 3;
+            level = 3;
+            if(goLeft && thePlayer.x > 0) {
+                thePlayer.x -= 5;
+            }
+            if(goRight && thePlayer.x + thePlayer.size < canvas.width) {
+                thePlayer.x += 5;
+            }
+            health = health + 2;
+            break;
+        case 40:
+            // Bads go faster, goods go slower
+            baddies.speed = 5;
+            goodies.speed = 3;
+            level = 4;
+            health = health + 1;
+            if(goLeft && thePlayer.x > 0) {
+                thePlayer.x -= 7;
+            }
+            if(goRight && thePlayer.x + thePlayer.size < canvas.width) {
+                thePlayer.x += 7;
+            }
+            break;
+        case 50:
+            // Designed to be unbeatable
+            baddies.speed = 8;
+            goodies.speed = 2;
+            level = 5;
+            break;
+    }
+}
+// For when you lose (because it WILL happen)
+
+function gamesOver() {
+    goodies.x = [];
+    baddies.x = [];
+    goodies.y = [];
+    baddies.y = [];
+    goodies.state = [];
+    stopGame = true;
+}
+// If you want more torture, then play again
+
+function playAgain() {
+    stopGame = false;
+    thePlayer.color = "white";
+    level = 1;
+    score = 0;
+    health = 3;
+    baddies.speed = 2;
+    goodies.speed = 2;
+}
+
+function draw() {
+    context.clearRect(0, 0, canvas.width, canvas.height);
+    if(!stopGame) {
+        makeYou();
+        avoidThese();
+        collectThese();
+        updateScreen();
+        drawGoodies();
+        drawBaddies();
+        // Make the scoreboard
+        context.fillStyle = "white";
+        context.font = "20px Helvetica";
+        context.textAlign = "left";
+        context.fillText("Your Score: " + score, 10, 25);
+        // Make the health bar
+        context.fillStyle = "black";
+        context.textAlign = "right";
+        context.fillText("Your Health: " + health, 500, 25);
+    } else {
+        context.fillStyle = "white";
+        context.font = "25px Helvetica";
+        context.textAlign = "center";
+        context.fillText("Welp, you lost. That's fine <(_   _)>", canvas.width / 2, 175);
+        context.font = "20px Helvetica";
+        context.fillText("(/≧▽≦)/ Press the Spacebar to Play", canvas.width / 2, 475);
+        context.fillText("Final score: " + score, canvas.width / 2, 230);
+    }
+    requestAnimationFrame(draw);
+}
+draw();
