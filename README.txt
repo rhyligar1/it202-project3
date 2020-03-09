@@ -17,3 +17,7 @@ What doesn't work:
 
 What kinda works:
 1) Health replenishing is supposed to increase by 1 or 2 depending on the level but it shoots up way too far.
+
+
+Other Notes:
+The Javascript file contains the same code as the <script></script> in the HTML. I was having pushing issues from Codio.
