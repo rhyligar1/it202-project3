@@ -21,3 +21,4 @@ What kinda works:
 
 Other Notes:
 The Javascript file contains the same code as the <script></script> in the HTML. I was having pushing issues from Codio.
+Chrome can be funny when running the program. I have had better luck downloading the index.html and opening via Internet Explorer.
